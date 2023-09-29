@@ -1,0 +1,128 @@
+statics: "/" # 静态文件根目录，可用于CDN加速
+assets: "assets" # 图片资源存放目录
+css: "css" # css存放目录(不建议改动)
+js: "js" # js存放目录(不建议改动)
+
+markdown:
+  render: # 渲染器设置
+    html: false # 过滤 HTML 标签
+    xhtmlOut: true # 使用 '/' 来闭合单标签 （比如 <br />）。
+    breaks: true # 转换段落里的 '\n' 到 <br>。
+    linkify: true # 将类似 URL 的文本自动转换为链接。
+    typographer:
+    quotes: "“”‘’"
+  plugins: # markdown-it 插件设置
+    - plugin:
+        name: markdown-it-toc-and-anchor
+        enable: true
+        options: # 文章目录以及锚点应用的 class 名称，shoka 系主题必须设置成这样
+          tocClassName: "toc"
+          anchorClassName: "anchor"
+    - plugin:
+        name: markdown-it-multimd-table
+        enable: true
+        options:
+          multiline: true
+          rowspan: true
+          headerless: true
+    - plugin:
+        name: ./markdown-it-furigana
+        enable: true
+        options:
+          fallbackParens: "()"
+    - plugin:
+        name: ./markdown-it-spoiler
+        enable: true
+        options:
+          title: "你知道得太多了"
+
+autoprefixer:
+  exclude:
+    - "*.min.css"
+
+social:
+  github: https://github.com/sunquan123 || github || "#191717"
+  # google: https://plus.google.com/yourname || google
+  # twitter: https://twitter.com/yourname || twitter || "#00aff0"
+  # zhihu: https://www.zhihu.com/people/yourname || zhihu || "#1e88e5"
+  # music: https://music.163.com/#/user/home?id=yourid || cloud-music || "#e60026"
+  # weibo: https://weibo.com/yourname || weibo || "#ea716e"
+  # about: https://about.me/yourname || address-card || "#3b5998"
+  # email: mailto:foo@xxx.com || envelope || "#55acd5"
+  # facebook: https://www.facebook.com/yourname || facebook
+  # stackoverflow: https://stackoverflow.com/ || stack-overflow
+  # youtube: https://youtube.com/yourname || youtube
+  # instagram: https://instagram.com/yourname || instagram
+  # skype: skype:yourname?call|chat || skype
+  # douban: https://www.douban.com/people/yourname/ || douban
+
+sidebar:
+  position: left # left
+  avatar: avatar.jpeg
+
+widgets:
+  random_posts: true # 随机文章
+  recent_comments: true # 显示最近评论
+
+# 页尾全站统计
+footer:
+  since: 2014 # 开始时间
+  count: true # 开启
+  icp: # ICP备案
+    enable: false
+    icon: "beian.webp" #网安备案图片
+    icpnumber: "苏ICP备2023030470号" # ICP备案号
+    beian: "xxx" # 网安备案号
+    recordcode: "xxx" # 网安备案链接中的recordcode参数
+
+# 文章界面统计
+post:
+  count: true # 开启
+
+auto_scroll: false
+
+language: zh-CN
+
+minify:
+  html:
+    enable: true
+    exclude: # 排除 hexo-feed 用到的模板文件
+      - "**/json.ejs"
+      - "**/atom.ejs"
+      - "**/rss.ejs"
+  css:
+    enable: true
+    exclude:
+      - "**/*.min.css"
+  js:
+    enable: true
+    mangle:
+      toplevel: true #如果js压缩错误请删除此行
+    output:
+    compress:
+      ecma: 2018
+    exclude:
+      - "**/*.min.js"
+
+feed:
+  limit: 20
+  order_by: "-date"
+  tag_dir: false
+  category_dir: false
+  rss:
+    enable: true
+    template: "node_modules/hexo-theme-shokax/layout/_alternate/rss.ejs"
+    output: "rss.xml"
+  atom:
+    enable: true
+    template: "node_modules/hexo-theme-shokax/layout/_alternate/atom.ejs"
+    output: "atom.xml"
+  jsonFeed:
+    enable: true
+    template: "node_modules/hexo-theme-shokax/layout/_alternate/json.ejs"
+    output: "feed.json"
+
+# Deployment
+## Docs: https://hexo.io/docs/one-command-deployment
+deploy:
+  type: ''
