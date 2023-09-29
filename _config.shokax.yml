@@ -69,7 +69,7 @@ footer:
   since: 2014 # 开始时间
   count: true # 开启
   icp: # ICP备案
-    enable: false
+    enable: true
     icon: "beian.webp" #网安备案图片
     icpnumber: "苏ICP备2023030470号" # ICP备案号
     beian: "xxx" # 网安备案号
