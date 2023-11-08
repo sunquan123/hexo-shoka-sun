@@ -2,7 +2,7 @@
 layout: shoka
 title: 我终于知道为什么我的微信小程序发送https请求失败了！
 date: 2023-08-29 20:02:14
-tags:
+tags: ['微信小程序','阿里云','HTTPS证书','wireshark']
 ---
 
 ## 我终于知道为什么我的微信小程序发送https请求失败了！
