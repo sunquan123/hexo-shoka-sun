@@ -103,6 +103,39 @@ select * from student where sex = #{sex}
 </if>
 ```
 
+### Mybatis-Generator生成代码也需要修改
+
+Mybatis-Generator生成的代码也有sql in查询的问题，需要开发者自己在项目中找到并修改。
+
+```xml
+<when test="criterion.listValue">
+    and ${criterion.condition}
+    <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+    #{listItem}
+    </foreach>
+</when>
+```
+
+修改后的代码如下：
+
+```xml
+<when test="criterion.listValue">
+    and (${criterion.condition}
+    <foreach collection="criterion.value" item="listItem" index="index" open="(" close=")">
+          <if test="index > 0">
+               <choose>
+                    <when test="index % 1000 == 999"> ) or ${criterion.condition}( </when>
+                    <otherwise>,</otherwise>
+               </choose>
+           </if>
+           #{listItem}
+    </foreach>
+     )
+</when>
+```
+
+如果公司有定制化Mybatis-Generator的能力，也可以自己修改Mybatis-Generator项目的生成代码，最后将指定版本工具推广到全公司哟~
+
 ### 结尾
 
 我们开发者日常使用Mybatis时，最好有检查sql日志是否正确的思维，做一个细心的小机灵鬼。
