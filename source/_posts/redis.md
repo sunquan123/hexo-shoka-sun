@@ -5,6 +5,8 @@ date: 2023-12-17 11:05:14
 tags: ['Redis']
 ```
 
+# Redis学习笔记
+
 ## 如何集成Redis到Spring Boot中？
 
 ### 添加redis所需依赖：
