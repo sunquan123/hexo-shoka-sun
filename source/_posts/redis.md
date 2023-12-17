@@ -1,9 +1,9 @@
-```yaml
+---
 layout: shoka
 title: Redis学习笔记
 date: 2023-12-17 11:05:14
 tags: ['Redis']
-```
+---
 
 # Redis学习笔记
 
