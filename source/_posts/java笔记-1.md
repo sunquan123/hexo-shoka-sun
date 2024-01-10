@@ -1,9 +1,10 @@
-```yaml
+---
 layout: shoka
 title: Java笔记-1
 date: 2023-12-01 08:56:30
 tags: ['Java']
-```
+
+---
 
 # Java笔记-1
 

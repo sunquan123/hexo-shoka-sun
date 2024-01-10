@@ -1,11 +1,10 @@
-# 
-
-```yaml
+---
 layout: shoka
 title: Java笔记-2
 date: 2023-12-03 08:56:30
 tags: ['Java']
-```
+
+---
 
 # Java笔记-2
 
@@ -27,7 +26,7 @@ RandomAccessFile的特点是可以设置从文件哪个字节偏移量开始写�
 
 文件分片后，合并文件的代码如下：
 
-![](./pic/java/文件分片后合并.png)
+![](/images/java/文件分片后合并.png)
 
 ### 适配器模式
 
@@ -155,13 +154,13 @@ BIO 属于同步阻塞 I/O 模型 。
 
 同步阻塞 IO 模型中，应用程序主动发起recv_from调用后，会一直阻塞，直到内核把数据拷贝到用户空间。
 
-![](./pic/java/bio.png)
+![](/images/java/bio.png)
 
 在客户端连接数量不高的情况下，是没问题的。但是，当面对十万甚至百万级连接的时候，传统的 BIO 模型是无能为力的。因此，我们需要一种更高效的 I/O 处理模型来应对更高的并发量。
 
 #### 同步非阻塞 I/O
 
-![](./pic/java/nio.png)
+![](/images/java/nio.png)
 
 在同步非阻塞I/O模型中，应用程序先发起recv_from系统调用，此时系统会检查数据是否缓冲完成，如果没有，则直接返回。此后应用程序隔段时间就会发起一次recv_from系统调用，系统都会返回，直到数据已经缓冲到内核缓冲区。此时应用程序发起recv_from系统调用时，内核将开始拷贝内核缓冲区中的数据到应用程序内存中，直到数据拷贝完成，这个时候内核会返回给应用程序，应用程序开始处理数据。在拷贝期间，应用程序处于阻塞状态。可以看出，同步非阻塞I/O模型相对于阻塞模型来说，准备数据和数据拷贝到到内核缓冲区的过程都是非阻塞的，应用程序的调用都是立即返回的。直到内核开始从内核缓冲区中拷贝数据到应用程序内存中的时期，才会使应用程序处于阻塞状态。这里的同步是指内核复制数据到应用程序是同步进行的，非阻塞是指应用程序在确认数据是否缓冲完毕的时候是非阻塞进行的。
 
@@ -169,7 +168,7 @@ BIO 属于同步阻塞 I/O 模型 。
 
 #### I/O 多路复用
 
-![](./pic/java/io多路复用.png)
+![](/images/java/io多路复用.png)
 
 I/O 多路复用模型中，线程首先发起 select 调用，询问内核查询的多个套接字是否准备好数据了，此时一直处于阻塞状态，等到某一个套接字数据准备好了，内核才会返回结果，此时用户线程再发起recv_from调用。recv_from调用的过程（数据从内核空间 -> 用户空间）还是阻塞的。这个IO模型本质上依然是同步阻塞模型。
 
@@ -182,17 +181,17 @@ IO 多路复用模型，相对于阻塞I/O模型，似乎不显出什么优势�
 
 Java 中的 NIO ，有一个非常重要的**选择器 ( Selector )** 的概念，也可以被称为 **多路复用器**。通过它，只需要一个线程便可以管理多个客户端连接。当客户端数据到了之后，才会为其服务。
 
-![](./pic/java\javanio.png)
+![](/images/java\javanio.png)
 
 #### 信号驱动 I/O
 
-![](./pic/java/sigio.jpg)
+![](/images/java/sigio.jpg)
 
 这个模型似乎未出现在java中，还是一个系统模型。这个模型主要是应用程序先发起一个sigaction系统调用，产生一个信号处理程序，此时内核会立即返回。直到内核中数据准备好，数据拷贝到内核缓冲区中，此后内核会按照约定递交sigio信号，应用程序接收到后会按照自己产生的信号处理程序继续发起recv_from系统调用，此时内核将内核缓冲区的数据复制到应用程序内存中，完成后返回。可以看出这个模型在数据准备阶段不需要阻塞，也不会出现频繁系统调用产生的系统资源浪费，全部流程基于约定的信号和数据处理程序，只是最后的内核缓冲区数据拷贝到应用程序内存中这个时期应用程序还是处于阻塞状态。
 
 #### 异步 I/O（AIO）
 
-![](./pic/java/aio.png)
+![](/images/java/aio.png)
 
 异步I/O模型是应用程序发起aio_read系统调用，内核检查数据未准备好，则直接返回。直到内核接收到数据且在内核缓冲区准备好数据，且内核按照约定将内核缓冲区的数据拷贝到应用程序内存中指定位置，此后内核会按照约定通知应用程序。此时应用程序可以开始处理数据。在此期间，应用程序未处于阻塞状态。这是真正的异步非阻塞IO。
 
@@ -203,7 +202,7 @@ Java 7 中引入了 NIO 的改进版 NIO 2,它是异步 IO 模型。目前来说
 要想理解零拷贝，首先要了解操作系统的IO流程，因为有内核态和用户态的区别，为了保证安全性和缓存，普通的读写流程如下： 
 （对于Java程序，还会多了一个堆外内存和堆内存之间的copy）
 
-![](./pic/java/零拷贝-1.png)
+![](/images/java/零拷贝-1.png)
 
 整体的流程如下所示： 
 
@@ -228,11 +227,11 @@ Java 7 中引入了 NIO 的改进版 NIO 2,它是异步 IO 模型。目前来说
 
 正常的IO流程中，不管是物理设备之间的数据拷贝，如磁盘到内存，还是内存之间的数据拷贝，如用户态到内核态，都是需要CPU参与的，如下所示
 
-![](./pic/java/零拷贝-2.png)
+![](/images/java/零拷贝-2.png)
 
 如果是比较大的文件，这样无意义的copy显然会极大的浪费CPU的效率，所以就诞生了DMA拷贝方式：
 
-![](./pic/java/零拷贝-3.png)
+![](/images/java/零拷贝-3.png)
 
 #### mmap
 
@@ -242,7 +241,7 @@ mmap，全称是memory map，翻译过来就是内存映射，顾名思义，就
 
 一般来讲，mmap会代替read方法，模型如下图所示：
 
-![](./pic/java/零拷贝-4.png)
+![](/images/java/零拷贝-4.png)
 
 如果这个时候系统进行IO的话，采用mmap + write的方式，内存拷贝的次数会变为3次，上下文切换则依旧是4次。需要注意的是，mmap采用基于缺页异常的懒加载模式。通过 mmap 申请 1000G 内存可能仅仅占用了 100MB 的虚拟内存空间，甚至没有分配实际的物理内存空间，只有当真正访问的时候，才会通过缺页中断的方式分配内存。但是mmap不是银弹，有如下原因：  
 
@@ -256,7 +255,7 @@ mmap，全称是memory map，翻译过来就是内存映射，顾名思义，就
 
 如果只是传输数据，并不对数据作任何处理，譬如将服务器存储的静态文件，如html，js发送到客户端用于浏览器渲染，在这种场景下，如果依然进行这么多数据拷贝和上下文切换，简直就是丧心病狂有木有！所以我们就可以通过sendfile的方式，只做文件传输，而不通过用户态进行干预：
 
-![](./pic/java/零拷贝-5.png)
+![](/images/java/零拷贝-5.png)
 
 此时我们发现，数据拷贝变成了3次，上下文切换减少到了2次。 
 虽然这个时候已经优化了不少，但是我们还有一个问题，为什么内核要拷贝两次（page cache -> socket cache），能不能省略这个步骤？当然可以
@@ -265,7 +264,7 @@ mmap，全称是memory map，翻译过来就是内存映射，顾名思义，就
 
 DMA gather是LInux2.4新引入的功能，它可以读page cache中的数据描述信息（内存地址和偏移量）记录到socket cache中，由 DMA 根据这些将数据从读缓冲区拷贝到网卡，相比之前版本减少了一次CPU拷贝的过程，如下图所示：
 
-![](./pic/java/零拷贝-6.png)
+![](/images/java/零拷贝-6.png)
 
 #### direct I/O
 
@@ -366,13 +365,13 @@ Java 提供的线程安全的 `Queue` 可以分为**阻塞队列**和**非阻塞
 
 跳表的本质是同时维护了多个链表，并且链表是分层的
 
-![](./pic/java/skiplist1.jpg)
+![](/images/java/skiplist1.jpg)
 
 最低层的链表维护了跳表内所有的元素，每上面一层链表都是下面一层的子集。
 
 跳表内的所有链表的元素都是排序的。查找时，可以从顶级链表开始找。一旦发现被查找的元素大于当前链表中的取值，就会转入下一层链表继续找。这也就是说在查找过程中，搜索是跳跃式的。如上图所示，在跳表中查找元素 18。
 
-![](./pic/java/skiplist2.jpg)
+![](/images/java/skiplist2.jpg)
 
 查找 18 的时候原来需要遍历 18 次，现在只需要 7 次即可。针对链表长度比较大的时候，构建索引查找效率的提升就会非常明显。
 
@@ -692,7 +691,7 @@ public class ThreadLocalTest02 {
 
 `ThreadLocal`是一个弱引用，当为`null`时，会被当成垃圾回收 。
 
-![](./pic/java/threadlocal-1.webp)
+![](/images/java/threadlocal-1.webp)
 
 **重点来了，突然我们ThreadLocal是null了，也就是要被垃圾回收器回收了，但是此时我们的ThreadLocalMap（thread 的内部属性）生命周期和Thread的一样，它不会回收，这时候就出现了一个现象。那就是ThreadLocalMap的key没了，但是value还在，这就造成了内存泄漏。**
 
@@ -742,7 +741,7 @@ Java中线程的状态分为6种：
 
 状态流转如图：
 
-![](./pic/java/线程.png)
+![](/images/java/线程.png)
 
 #### WAITING和TIMED_WAIT的区别？
 
@@ -760,7 +759,7 @@ WAITING是等待状态，在Java中，调用wait方法时，线程会进入到WA
 
 只要把时间片划分的足够细，那么多个程序虽然在不断的串行执行，但是看起来也像是在同时执行一样。
 
-![](./pic/java/时间片.png)
+![](/images/java/时间片.png)
 
 那么，CPU的时间片其实是很短的，一般也就是10-20毫秒左右。
 
@@ -914,7 +913,7 @@ notify和notifyAll因为也是操作对象的，所以把他们定义在Object�
 
 Java中线程池的继承关系如下：
 
-![](./pic/java/线程池-1.png)
+![](/images/java/线程池-1.png)
 
 #### 线程池的创建方式
 
@@ -932,7 +931,7 @@ Executors的创建线程池的方法，创建出来的线程池都实现了Execu
 
 通常，一般构造函数会反映出这个工具或这个对象的数据存储结构。
 
-![](./pic/java/线程池-2.png)
+![](/images/java/线程池-2.png)
 
 > 如果把线程池比作一个公司。公司会有正式员工处理正常业务，如果工作量大的话，会雇佣外包人员来工作。
 > 
@@ -1019,7 +1018,7 @@ rejectedExecutionHandler = AbortPolicy()
 
 接着，我们看一下线程池中比较重要的execute方法，该方法用于向线程池中添加一个任务。
 
-![](./pic/java/线程池-3.png)
+![](/images/java/线程池-3.png)
 
 核心模块用红框标记了。
 
@@ -1031,7 +1030,7 @@ rejectedExecutionHandler = AbortPolicy()
 
 这里逻辑稍微有点复杂，画了个流程图仅供参考
 
-![](./pic/java/线程池-4.png)
+![](/images/java/线程池-4.png)
 
 接下来，我们看看如何添加一个工作线程的？
 
@@ -1039,7 +1038,7 @@ rejectedExecutionHandler = AbortPolicy()
 
 从方法execute的实现可以看出：addWorker主要负责创建新的线程并执行任务，代码如下（这里代码有点长，没关系，也是分块的，总共有5个关键的代码块）：
 
-![](./pic/java/线程池-5.png)
+![](/images/java/线程池-5.png)
 
 第一个红框：做是否能够添加工作线程条件过滤：
 
@@ -1053,7 +1052,7 @@ rejectedExecutionHandler = AbortPolicy()
 
 接着看后面的代码：
 
-![](./pic/java/线程池-6.png)
+![](/images/java/线程池-6.png)
 
 第一个红框：获取线程池主锁。
 
@@ -1065,13 +1064,13 @@ rejectedExecutionHandler = AbortPolicy()
 
 接下来，我们看看workers是什么。
 
-![](./pic/java/线程池-7.png)
+![](/images/java/线程池-7.png)
 
 一个hashSet。所以，线程池底层的存储结构其实就是一个HashSet。
 
 #### worker线程处理队列任务
 
-![](./pic/java/线程池-8.png)
+![](/images/java/线程池-8.png)
 
 第一个红框：是否是第一次执行任务，或者从队列中可以获取到任务。
 
@@ -1095,7 +1094,7 @@ rejectedExecutionHandler = AbortPolicy()
 
 线程池原理关键技术：锁（lock,cas）、阻塞队列、hashSet（资源池）
 
-![](./pic/java/线程池-9.png)
+![](/images/java/线程池-9.png)
 
 ### 线程数设定成多少更合适？
 
@@ -1157,7 +1156,7 @@ volatile关键字是由JVM提供的最轻量级同步机制。与被滥用的syn
 
 #### 并发编程的3个基本概念
 
-![](./pic/java/volatile-2.png)
+![](/images/java/volatile-2.png)
 
 ##### 原子性
 
@@ -1191,7 +1190,7 @@ JMM定义了线程和主内存之间的抽象关系：：
 
 - 线程不能直接读写主内存中的变量，所有操作均在工作内存中完成。线程，主内存，工作内存的交互关系如图。
 
-![](./pic/java/jmm-1.png)
+![](/images/java/jmm-1.png)
 
 对于普通的共享变量来讲：
 
@@ -1281,11 +1280,11 @@ Java内存模型中的有序性可以总结为：
 
 2. 除此之外，Java内存模型还规定了在执行上述8种基本操作时必须满足如下规则：
 
-![](./pic/java/volatile-3.png)
+![](/images/java/volatile-3.png)
 
 说明：
 
-![](./pic/java/volatile-4.png)
+![](/images/java/volatile-4.png)
 
 #### 保证可见性
 
@@ -1348,7 +1347,7 @@ public class VolatileVisibilityTest {
 
 在我们看来，第一个线程只需要等待第二个线程改变了flag的即可跳出循环。以下是程序运行结果：
 
-![](./pic/java/volatile-5.png)
+![](/images/java/volatile-5.png)
 
 可以看到当“work done”打印出来时程序还没有停止，此时我们可以得出结论：两个线程对共享变量的操作是互相不可见的。此时我们很自然的想到了通过加synchronizedJava内置锁来解决。
 
@@ -1374,7 +1373,7 @@ IA32架构软件开发者手册对lock前缀指令的解释：
 
 2. 这个写回内存的操作会引起其他cpu里缓存了该内存地址的数据失效（MESI协议）
 
-![](./pic/java/volatile-6.png)
+![](/images/java/volatile-6.png)
 
 #### 保证有序性
 
@@ -1424,7 +1423,7 @@ JMM有一些内在的规律性，也就是说，没有任何方法可以保证�
 
 \<JSR-133：Java Memory Model and Thread Specification>定义了如下happens-before规则：
 
-![](./pic/java/volatile-7.png)
+![](/images/java/volatile-7.png)
 
 - 第1条规则（程序顺序规则）：在一个线程里，所有的操作都是按顺序的，但是在JMM里其实只要执行结果一样，是允许重排序的，这边的`happens-before`强调的重点也是单线程执行结果的正确性，但是无法保证多线程也是如此。
 - 第2条规则（监视器规则）：就是在加锁之前，确定这个锁之前已经被释放了，才能继续加锁。
@@ -1437,7 +1436,7 @@ JMM有一些内在的规律性，也就是说，没有任何方法可以保证�
 
 为了实现volatile的内存语义，编译器在生成字节码时，会在指令序列中插入内存屏障来禁止特定类型的处理器重排序，下面是基于保守策略的JMM内存平展插入策略。
 
-![](./pic/java/volatile-8.png)
+![](/images/java/volatile-8.png)
 
 JVM的实现会在volatile读写前后均加上内存屏障，在一定程度上保证有序性。如下所示：
 
@@ -1453,11 +1452,11 @@ StoreLoadBarrier
 
 volatile在`写操作`前后插入了内存屏障后生成的指令序列示意图如下：
 
-![](./pic/java/volatile-9.png)
+![](/images/java/volatile-9.png)
 
 volatile在`读操作`后面插入了内存屏障后生成的指令序列示意图如下：
 
-![](./pic/java/volatile-10.png)
+![](/images/java/volatile-10.png)
 
 ###### 解决方法：volatile关键字
 
@@ -1801,7 +1800,7 @@ public void multiply() {
 
 #### 总结
 
-![](./pic/java/volatile-11.png)
+![](/images/java/volatile-11.png)
 
 ### synchronized java底层怎么实现？
 
@@ -1930,7 +1929,7 @@ javap -p -v -c SynchronizedTest.class
 
 反编译出来的字节码文件内容有点多，我只截取了关键部分来分析。
 
-![](./pic/java/synchronized-1.png)
+![](/images/java/synchronized-1.png)
 
 注意上面我用红框标出来的地方，`synchronized`关键字在经过Javac编译之后，会在同步代码块的前后形成`monitorenter`和`monitorexit`两个字节码指令。 
 根据《Java虚拟机规范》的要求
@@ -1944,7 +1943,7 @@ javap -p -v -c SynchronizedTest.class
 
 同步方法test1的反编译后的字节码文件部分如下：
 
-![](./pic/java/synchronized-2.png)
+![](/images/java/synchronized-2.png)
 
 注意我用红框圈起来的部分，这个`ACC_SYNCHRONIZED`标志。代表的是当线程执行到方法后会检查是否有这个标志，如果有的话就会隐式的去调用`monitorenter`和`monitorexit`两个命令来将方法锁住。
 
@@ -1995,7 +1994,7 @@ ObjectMonitor() {
 
 其中 _owner、_WaitSet和_EntryList 字段比较重要，它们之间的转换关系如下图
 
-![](./pic/java/synchronized-7.webp)
+![](/images/java/synchronized-7.webp)
 
 从上图可以总结获取Monitor和释放Monitor的流程如下：
 
@@ -2016,7 +2015,7 @@ ObjectMonitor() {
 高效并发是从JDK5升级到JDK6的一项重要的改进项，在JDK6版本上虚拟机开发团队花费了大量的资源去实现各种锁优化技术，来为重量级锁减重。
 synchronized在升级后的整个加锁过程，大致如下图。
 
-![](./pic/java/synchronized-3.png)
+![](/images/java/synchronized-3.png)
 
 这里要说明一下，锁升级的过程是不可逆的。
 
@@ -2035,7 +2034,7 @@ synchronized在升级后的整个加锁过程，大致如下图。
 
 偏向锁的获取流程如下图：
 
-![](./pic/java/synchronized-4.png)
+![](/images/java/synchronized-4.png)
 
 偏向锁的撤销：
 
@@ -2055,11 +2054,11 @@ synchronized在升级后的整个加锁过程，大致如下图。
 
 - 首先判断当前对象是否处于一个无锁的状态，如果是，Java虚拟机将在当前线程的栈帧建立一个锁记录（Lock Record），用于存储对象目前的Mark Word的拷贝，如图所示。
 
-![](./pic/java/synchronized-5.png)
+![](/images/java/synchronized-5.png)
 
 - 将对象的Mark Word复制到栈帧中的Lock Record中，并将Lock Record中的owner指向当前对象，并使用CAS操作将对象的Mark Word更新为指向Lock Record的指针，如图所示。
 
-![](./pic/java/synchronized-6.png)
+![](/images/java/synchronized-6.png)
 
 - 如果第二步执行成功，表示该线程获得了这个对象的锁，将对象Mark Word中锁的标志位设置为“00”，执行同步代码块。
 - 如果第二步未执行成功，需要先判断当前对象的Mark Word是否指向当前线程的栈帧，如果是，表示当前线程已经持有了当前对象的锁，这是一次重入，直接执行同步代码块。如果不是表示多个线程存在竞争，该线程通过自旋尝试获得锁，即重复步骤2，自旋超过一定次数，轻量级锁升级为重量级锁。
@@ -2082,11 +2081,11 @@ Java锁的几种状态并不包括自旋锁，当轻量级锁的出现竞争就�
 
 自适应自旋锁：JDK1.6引入了自适应自旋锁，自适应自旋锁的自旋次数不在固定，而是由上一次在同一个锁上的自旋时间及锁的拥有者的状态来决定的。如果对于某个锁对象，刚刚有线程自旋等待成功获取到锁，那么虚拟机将认为这次自旋等待的成功率也很高，会允许线程自旋等待的时间更长一些。如果对于某个锁对象，线程自旋等待很少成功获取到锁，那么虚拟机将会减少线程自旋等待的时间。
 
-![](./pic/java/synchronized-6.png)
+![](/images/java/synchronized-6.png)
 
 ##### 偏向锁、轻量级锁、重量级锁的对比
 
-![](./pic/java/synchronized-8.webp)
+![](/images/java/synchronized-8.webp)
 
 该表格出自《Java并发编程的艺术》
 
