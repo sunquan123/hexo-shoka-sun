@@ -367,6 +367,10 @@ if tonumber(current) == 1 then
 end
 ```
 
+##### 常见应用场景
+
+session、token、图片地址、序列化对象、用户限流、页面限流、分布式锁
+
 #### hash
 
 ##### 常用命令
@@ -398,9 +402,25 @@ hkeys key
 hvals key
 ```
 
-list的常用命令
+##### 常见应用场景
 
-set的常用命令
+对象、用户信息、购物车信息、商品信息、文章信息
+
+#### list
+
+##### 常用命令
+
+##### 常见应用场景
+
+队列、栈、简陋消息队列
+
+#### set
+
+##### 常用命令
+
+##### 常见应用场景
+
+点赞数、交并差操作、共同好友、共同关注、好友推荐、公众号推荐、随机抽取用户中奖、随机点名
 
 #### bitmap
 
@@ -413,9 +433,13 @@ setbit key index 0/1
 bitcount key
 ```
 
-##### bitmap的业务场景
+##### 常见应用场景
 
-实现用户上线次数统计：
+用户签到、活跃用户、用户行为统计（是否点赞过某个视频）
+
+下面举个例子：
+
+###### 使用bitmap实现用户上线次数统计
 
 举个例子，如果今天是网站上线的第 100 天，而用户 peter 在今天阅览过网站，那么
 
@@ -562,9 +586,15 @@ termination or kill the server in a hard way using the SHUTDOWN NOSAVE command.
 shutdown nosave 和 shutdown 的区别在于 shutdown nosave 不会进行持久化操作，意味着发生在上一次快照后的数据库修改都会丢失
 ```
 
-### ZSet
+#### ZSet
 
 ZSet（也称为Sorted Set）是Redis中的一种特殊的数据结构，它内部维护了一个有序的字典，这个字典的元素中既包括了一个成员（member），也包括了一个double类型的分值(score)。这个结构可以帮助用户实现记分类型的排行榜数据，比如游戏分数排行榜，网站流行度排行等。
+
+##### 常见应用场景
+
+交并差操作、排行榜、送礼、微信步数、段位排行、热度排行、优先级任务队列
+
+##### 具体实现
 
 Redis中的ZSet在具体实现上，有多种结构，大类的话有两种，分别是ziplist(压缩列表)和skiplist(跳跃表)，但是这只是以前，在Redis 5.0中新增了一个listpack（紧凑列表）的数据结构，这种数据结构就是为了替代ziplist的，而在之后Redis 7.0的发布中，在ZSet的实现中，已经彻底不在使用zipList了。
 
@@ -582,7 +612,7 @@ Redis中的ZSet在具体实现上，有多种结构，大类的话有两种，�
 
 dict用来实现元素到分值的映射关系，其中元素作为键，分值作为值。哈希表的插入、删除和查找操作的时间复杂度都是 O(1)，具有非常高的性能。
 
-#### 何时转换
+##### 何时转换
 
 ZipList（ListPack）和SkipList之间是什么时候进行转换的呢？
 
@@ -596,7 +626,7 @@ ZipList（ListPack）和SkipList之间是什么时候进行转换的呢？
 
 总的来说就是，当元素数量少于128，每个元素的长度都小于64字节的时候，使用ZipList（ListPack），否则，使用SkipList！
 
-#### 跳表
+##### 跳表
 
 跳表也是一个有序链表，如下面这个数据结构：
 
@@ -1717,31 +1747,288 @@ Redis即使是集群，单个key也是只能存储在单个Redis节点上，如�
 
 根据上图，可以看出一个基本的限流策略`固定时间内限制访问次数`的实现逻辑
 
+## redis为什么设计成单线程的，为什么不用多线程？
+
+我们所说的Redis单线程，指的是"其网络IO和键值对读写是由一个线程完成的"，也就是说，Redis中只有网络请求模块和数据操作模块是单线程的。而其他的如持久化存储模块、集群支撑模块等是多线程的。
+
+所以说，Redis中并不是没有多线程模型的，早在Redis 4.0的时候就已经针对部分命令做了多线程化。
+
+一个计算机程序在执行的过程中，主要需要进行两种操作分别是读写操作和计算操作。
+
+其中读写操作主要是涉及到的就是I/O操作，其中包括网络I/O和磁盘I/O。计算操作主要涉及到CPU。
+
+而多线程的目的，就是通过并发的方式来提升I/O的利用率和CPU的利用率。
+
+之所以Redis没有用多线程处理IO操作，主要是因为，Redis的操作基本都是基于内存的，CPU资源根本就不是Redis的性能瓶颈。
+
+Redis确实是一个I/O操作密集的框架，他的数据操作过程中，会有大量的网络I/O和磁盘I/O的发生。要想提升Redis的性能，是一定要提升Redis的I/O利用率的，这一点毋庸置疑。
+
+但是，提升I/O利用率，并不是只有采用多线程技术这一条路可以走！
+
+Redis并没有在网络请求模块和数据操作模块中使用多线程模型，主要是基于以下四个原因：
+
+1. Redis 操作基于内存，绝大多数操作的性能瓶颈不在 CPU
+
+2. 使用单线程模型，可维护性更高，开发，调试和维护的成本更低
+
+3. 单线程模型，避免了线程间切换带来的性能开销
+
+4. 在单线程中使用多路复用 I/O技术也能提升Redis的I/O利用率
+
+## 为什么Redis设计成单线程也能这么快？
+
+Redis的性能很好，除了因为他基于内存、有高效的数据结构等等原因以外，还有一个重要的原因那就是他在单线程中使用多路复用 I/O技术也能提升Redis的I/O利用率。
+
+多路复用这个词，相信很多人都不陌生。那么，Redis的多路复用技术有什么特别的呢？
+
+这里先讲讲Linux多路复用技术，就是多个进程的IO可以注册到同一个管道上，这个管道会统一和内核进行交互。当管道中的某一个请求需要的数据准备好之后，进程再把对应的数据拷贝到用户空间中。
+
+多看一遍上面这张图和上面那句话，后面可能还会用得到。
+
+也就是说，通过一个线程来处理多个IO流。
+
+IO多路复用在Linux下包括了三种，select、poll、epoll，抽象来看，他们功能是类似的，但具体细节各有不同。
+
+其实，Redis的IO多路复用程序的所有功能都是通过包装操作系统的IO多路复用函数库来实现的。每个IO多路复用函数库在Redis源码中都有对应的一个单独的文件。
+
+在Redis 中，每当一个套接字准备好执行连接应答、写入、读取、关闭等操作时，就会产生一个文件事件。因为一个服务器通常会连接多个套接字，所以多个文件事件有可能会并发地出现。
+
+一旦有请求到达，就会交给 Redis 线程处理，这就实现了一个 Redis 线程处理多个 IO 流的效果。
+
+Redis底层关于epoll的源码实现在redis的src源码目录的ae_epoll.c文件里，典型的epoll的NIO线程模型(nginx也是)就是由epoll实例收集所有事件(连接与读写事件)，由一个服务端线程连续处理所有事件命令。
+
+所以，Redis选择使用多路复用IO技术来提升I/O利用率。
+
+## 为什么Redis 6.0引入了多线程？
+
+2020年5月份，Redis正式推出了6.0版本，这个版本中有很多重要的新特性，其中多线程特性引起了广泛关注。
+
+但是，需要提醒大家的是，Redis 6.0中的多线程，也只是针对处理网络请求过程采用了多线程，而数据的读写命令，仍然是单线程处理的。
+
+但是，不知道会不会有人有这样的疑问：
+
+Redis不是号称单线程也有很高的性能么？
+
+不是说多路复用技术已经大大的提升了IO利用率了么，为啥还需要多线程？
+
+主要是因为我们对Redis有着更高的要求。
+
+根据测算，Redis 将所有数据放在内存中，内存的响应时长大约为 100 纳秒，对于小数据包，Redis 服务器可以处理 80,000 到 100,000 QPS，这么高的对于 80% 的公司来说，单线程的 Redis 已经足够使用了。
+
+但随着越来越复杂的业务场景，有些公司动不动就上亿的交易量，因此需要更大的 QPS。
+
+为了提升QPS，很多公司的做法是部署Redis集群，并且尽可能提升Redis机器数。但是这种做法的资源消耗是巨大的。
+
+而经过分析，限制Redis的性能的主要瓶颈出现在网络IO的处理上，虽然之前采用了多路复用技术。但是我们前面也提到过，多路复用的IO模型本质上仍然是同步阻塞型IO模型。
+
+下面是多路复用IO中select函数的处理过程：
+
+从上图我们可以看到，在多路复用的IO模型中，在处理网络请求时，调用 select （其他函数同理）的过程是阻塞的，也就是说这个过程会阻塞线程，如果并发量很高，此处可能会成为瓶颈。
+
+虽然现在很多服务器都是多个CPU核的，但是对于Redis来说，因为使用了单线程，在一次数据操作的过程中，有大量的CPU时间片是耗费在了网络IO的同步处理上的，并没有充分的发挥出多核的优势。
+
+如果能采用多线程，使得网络处理的请求并发进行，就可以大大的提升性能。多线程除了可以减少由于网络 I/O 等待造成的影响，还可以充分利用 CPU 的多核优势。
+
+所以，Redis 6.0采用多个IO线程来处理网络请求，网络请求的解析可以由其他线程完成，然后把解析后的请求交由主线程进行实际的内存读写。提升网络请求处理的并行度，进而提升整体性能。
+
+但是，Redis 的多 IO 线程只是用来处理网络请求的，对于读写命令，Redis 仍然使用单线程来处理。
+
+那么，在引入多线程之后，如何解决并发带来的线程安全问题呢？
+
+这就是为什么我们前面多次提到的"Redis 6.0的多线程只用来处理网络请求，而数据的读写还是单线程"的原因。
+
+Redis 6.0 只有在网络请求的接收和解析，以及请求后的数据通过网络返回给时，使用了多线程。而数据读写操作还是由单线程来完成的，所以，这样就不会出现并发问题了。
+
+## Redis如何应对大key删除太慢的问题？
+
+Redis4.0新增了非常实用的lazy free特性，从根本上解决Big Key(主要指定元素较多集合类型Key)删除的风险。
+
+### lazy free的定义
+
+lazy free可译为惰性删除或延迟释放；当删除键的时候,redis提供异步延时释放key内存的功能，把key释放操作放在bio(Background I/O)单独的子线程处理中，减少删除big key对redis主线程的阻塞。有效地避免删除big key带来的性能和可用性问题。
+
+redis4.0有lazy free功能后，这类主动或被动的删除big key时，和一个O(1)指令的耗时一样,亚毫秒级返回； 把真正释放redis元素耗时动作交由bio后台任务执行。在redis4.0前，没有lazy free功能；DBA只能通过取巧的方法，类似scan big key,每次删除100个元素；但在面对“被动”删除键的场景，这种取巧的删除就无能为力。
+例如：我们生产Redis Cluster大集群，业务缓慢地写入一个带有TTL的2000多万个字段的Hash键，当这个键过期时，redis开始被动清理它时，导致redis被阻塞20多秒，当前分片主节点因20多秒不能处理请求，并发生主库故障切换。
+
+### lazy free的使用
+
+lazy free的使用分为2类：第一类是与DEL命令对应的主动删除，第二类是过期key删除、maxmemory key驱逐淘汰删除。
+
+#### 主动删除键使用lazy free
+
+##### UNLINK命令
+
+UNLINK命令是与DEL一样删除key功能的lazy free实现。唯一不同时，UNLINK在删除集合类键时，如果集合键的元素个数大于64个(详细后文），会把真正的内存释放操作，给单独的bio来操作。示例如下：使用UNLINK命令删除一个大键mylist, 它包含200万个元素，但用时只有0.03毫秒。
+
+##### FLUSHALL/FLUSHDB ASYNC
+
+通过对FLUSHALL/FLUSHDB添加ASYNC异步清理选项，redis在清理整个实例或DB时，操作都是异步的。
+
+#### 被动删除键使用lazy free
+
+lazy free应用于被动删除中，目前有4种场景，每种场景对应一个配置参数； 默认都是关闭。
+
+```none
+lazyfree-lazy-eviction no
+lazyfree-lazy-expire no
+lazyfree-lazy-server-del no
+slave-lazy-flush no
+```
+
+注意：从测试来看lazy free回收内存效率还是比较高的； 但在生产环境请结合实际情况，开启被动删除的lazy free 观察redis内存使用情况。
+
+##### lazyfree-lazy-eviction
+
+针对redis内存使用达到maxmeory，并设置有淘汰策略时；在被动淘汰键时，是否采用lazy free机制；
+因为此场景开启lazy free, 可能使用淘汰键的内存释放不及时，导致redis内存超用，超过maxmemory的限制。此场景使用时，请结合业务测试。
+
+##### lazyfree-lazy-expire
+
+针对设置有TTL的键，达到过期后，被redis清理删除时是否采用lazy free机制；
+此场景建议开启，因TTL本身是自适应调整的速度。
+
+##### lazyfree-lazy-server-del
+
+针对有些指令在处理已存在的键时，会带有一个隐式的DEL键的操作。如rename命令，当目标键已存在,redis会先删除目标键，如果这些目标键是一个big key,那就会引入阻塞删除的性能问题。 此参数设置就是解决这类问题，建议可开启。
+
+##### slave-lazy-flush
+
+针对slave进行全量数据同步，slave在加载master的RDB文件前，会运行flushall来清理自己的数据场景，参数设置决定是否采用异常flush机制。如果内存变动不大，建议可开启。可减少全量同步耗时，从而减少主库因输出缓冲区爆涨引起的内存使用增长。
+
+### lazy free的监控
+
+lazy free能监控的数据指标，只有一个值：lazyfree_pending_objects，表示redis执行lazy free操作，在等待被实际回收内容的键个数。并不能体现单个大键的元素个数或等待lazy free回收的内存大小。
+所以此值有一定参考值，可监测redis lazy free的效率或堆积键数量； 比如在flushall async场景下会有少量的堆积。
+
+### lazy free实现的简单分析
+
+antirez为实现lazy free功能，对很多底层结构和关键函数都做了修改；该小节只介绍lazy free的功能实现逻辑；代码主要在源文件lazyfree.c和bio.c中。
+
+#### UNLINK命令
+
+unlink命令入口函数unlinkCommand()和del调用相同函数delGenericCommand()进行删除KEY操作，使用lazy标识是否为lazyfree调用。如果是lazyfree,则调用dbAsyncDelete()函数。
+
+但并非每次unlink命令就一定启用lazy free，redis会先判断释放KEY的代价(cost),当cost大于LAZYFREE_THRESHOLD才进行lazy free.
+
+释放key代价计算函数lazyfreeGetFreeEffort()，集合类型键，且满足对应编码，cost就是集合键的元数个数，否则cost就是1. 
+举例：
+
+1. 一个包含100元素的list key, 它的free cost就是100
+
+2. 一个512MB的string key, 它的free cost是1
+
+所以可以看出，redis的lazy free的cost计算主要时间复杂度相关。
+
+lazyfreeGetFreeEffort()函数代码
+
+```c
+size_t lazyfreeGetFreeEffort(robj *obj) {
+ if (obj->type == OBJ_LIST) { 
+ quicklist *ql = obj->ptr;
+ return ql->len;
+ } else if (obj->type == OBJ_SET && obj->encoding == OBJ_ENCODING_HT) {
+ dict *ht = obj->ptr;
+ return dictSize(ht);
+ } else if (obj->type == OBJ_ZSET && obj->encoding == OBJ_ENCODING_SKIPLIST){
+ zset *zs = obj->ptr;
+ return zs->zsl->length;
+ } else if (obj->type == OBJ_HASH && obj->encoding == OBJ_ENCODING_HT) {
+ dict *ht = obj->ptr;
+ return dictSize(ht);
+ } else {
+ return 1; /* Everything else is a single allocation. */
+ }
+}
+```
+
+dbAsyncDelete()函数的部分代码
+
+```c
+#define LAZYFREE_THRESHOLD 64 //根据FREE一个key的cost是否大于64，用于判断是否进行lazy free调用
+int dbAsyncDelete(redisDb *db, robj *key) {
+ /* Deleting an entry from the expires dict will not free the sds of
+ * the key, because it is shared with the main dictionary. */
+ if (dictSize(db->expires) > 0) dictDelete(db->expires,key->ptr); //从expires中直接删除key
+
+ dictEntry *de = dictUnlink(db->dict,key->ptr); //进行unlink处理，但不进行实际free操作
+ if (de) {
+ robj *val = dictGetVal(de);
+ size_t free_effort = lazyfreeGetFreeEffort(val); //评估free当前key的代价
+
+ /* If releasing the object is too much work, let's put it into the
+ * lazy free list. */
+ if (free_effort > LAZYFREE_THRESHOLD) { //如果free当前key cost>64, 则把它放在lazy free的list, 使用bio子线程进行实际free操作，不通过主线程运行
+ atomicIncr(lazyfree_objects,1); //待处理的lazyfree对象个数加1，通过info命令可查看
+ bioCreateBackgroundJob(BIO_LAZY_FREE,val,NULL,NULL); 
+ dictSetVal(db->dict,de,NULL);
+ }
+ }
+
+}
+```
+
+#### flushall/flushdb async命令
+
+当flushall/flushdb带上async,函数emptyDb()调用emptyDbAsync()来进行整个实例或DB的lazy free逻辑处理。
+emptyDbAsync处理逻辑如下：
+
+```c
+/* Empty a Redis DB asynchronously. What the function does actually is to
+ * create a new empty set of hash tables and scheduling the old ones for
+ * lazy freeing. */
+void emptyDbAsync(redisDb *db) {
+ dict *oldht1 = db->dict, *oldht2 = db->expires; //把db的两个hash tables暂存起来
+ db->dict = dictCreate(&dbDictType,NULL); //为db创建两个空的hash tables
+ db->expires = dictCreate(&keyptrDictType,NULL);
+ atomicIncr(lazyfree_objects,dictSize(oldht1)); //更新待处理lazyfree的键个数，加上db的key个数
+ bioCreateBackgroundJob(BIO_LAZY_FREE,NULL,oldht1,oldht2);//加入到bio list
+}
+```
+
+在bio中实际调用lazyfreeFreeDatabaseFromBioThread函数释放db
+
+```c
+void lazyfreeFreeDatabaseFromBioThread(dict *ht1, dict *ht2) {
+ size_t numkeys = dictSize(ht1);
+ dictRelease(ht1);
+ dictRelease(ht2);
+ atomicDecr(lazyfree_objects,numkeys);//完成整个DB的free,更新待处理lazyfree的键个数 
+}
+```
+
+#### 被动删除键使用lazy free
+
+被动删除4个场景，redis在每个场景调用时，都会判断对应的参数是否开启，如果参数开启，则调用以上对应的lazy free函数处理逻辑实现。
+
+### 总结
+
+因为Redis是单个主线程处理，antirez一直强调”Lazy Redis is better Redis”。而lazy free的本质就是把某些cost较高的(主要时间复制度，占用主线程cpu时间片)较高删除操作，从redis主线程剥离，让bio子线程来处理，极大地减少主线阻塞时间。从而减少删除导致性能和稳定性问题。
+
 ## 待解决问题
 
-redis为什么设计成单线程的，为什么不用多线程？
+redis为什么设计成单线程的，为什么不用多线程？--ok
 
-redis瓶颈在哪
+redis瓶颈在哪--ok
 
 IO多路复用技术
 
-redis6.0后多线程用在哪里、为了什么
+redis6.0后多线程用在哪里、为了什么--ok
 
 三种读写方式：数据一致性、并发性能
 
 redis阻塞的情况：O(n)的命令、AOF文件刷盘、save命令、AOF重写阻塞、big key传输阻塞、查找big key阻塞、清空数据库、集群扩容阻塞、使用了swap、cpu竞争、定期删除过期key阻塞主线程（可以设置lazy-free）、达到最大内存上限（内存淘汰）
 
-字符串：命令、sds（三个相对于c原生字符串优势）、场景（session、token、图片地址、序列化对象、用户限流、页面限流、分布式锁）
+字符串：命令、sds（三个相对于c原生字符串优势）、场景（session、token、图片地址、序列化对象、用户限流、页面限流、分布式锁）--ok
 
-list：命令、双向链表、场景（队列、栈、简陋消息队列）
+list：命令、双向链表、场景（队列、栈、简陋消息队列）--ok
 
-hash：命令、数组+链表、场景（对象、用户信息、购物车信息、商品信息、文章信息）
+hash：命令、数组+链表、场景（对象、用户信息、购物车信息、商品信息、文章信息）--ok
 
-set：命令、hashset、场景（点赞数、交并差操作、共同好友、共同关注、好友推荐、公众号推荐、随机抽取用户中奖、随机点名）
+set：命令、hashset、场景（点赞数、交并差操作、共同好友、共同关注、好友推荐、公众号推荐、随机抽取用户中奖、随机点名）--ok
 
-zset：命令、有打分的set（ziplist+skiplist，7.0后使用listpack取代ziplist，什么时候切换ziplist到skiplist、跳表是什么（跳表+hash，读score是O(1)，范围查询是O(logn)））、场景（交并差操作、排行榜、送礼、微信步数、段位排行、热度排行、优先级任务队列）
+zset：命令、有打分的set（ziplist+skiplist，7.0后使用listpack取代ziplist，什么时候切换ziplist到skiplist、跳表是什么（跳表+hash，读score是O(1)，范围查询是O(logn)））、场景（交并差操作、排行榜、送礼、微信步数、段位排行、热度排行、优先级任务队列）--ok
 
-bitmap：命令（操作多个bitmap？）、存储二进制数字的数组、场景（用户签到、活跃用户、用户行为统计（是否点赞过某个视频））
+bitmap：命令（操作多个bitmap？）、存储二进制数字的数组、场景（用户签到、活跃用户、用户行为统计（是否点赞过某个视频））--ok
 
 hyperloglog：其他的不太了解，场景（数据量巨大的技术场景，对ip的访问统计、对网站的UV统计）
 
@@ -1749,11 +2036,11 @@ geospatial index：常用命令、sorted set、场景（地图两点距离、得
 
 redis产生内存碎片的2个场景、如何查看内存碎片率、2种清理内存碎片方式
 
-AOF和RDB各自的优势、业务选择什么持久化
+AOF和RDB各自的优势、业务选择什么持久化--ok
 
-分布式锁的用途、性质、主要实现方式
+分布式锁的用途、性质、主要实现方式--ok
 
-redis实现分布式锁：自己写脚本、redisson、锁的优雅续期、可重入锁、分布式锁的集群可靠性方案
+redis实现分布式锁：自己写脚本、redisson、锁的优雅续期、可重入锁、分布式锁的集群可靠性方案--ok
 
 增加分布式锁性能：分段锁（100个商品库存分成10key，一个key保存10个库存，分开让客户端请求，并发性能提升十倍）
 
@@ -1767,19 +2054,19 @@ stream常用命令、消费者组命令
 
 事务机制：不支持回滚、往下执行全部命令
 
-缓存与db不一致问题：
+缓存与db不一致问题：--ok
 
-双更怎么都会不一致（失败问题、并发问题）、双更缓存利用率太低、性能浪费；
+双更怎么都会不一致（失败问题、并发问题）、双更缓存利用率太低、性能浪费；--ok
 
-删缓存更db（读写不一致）
+删缓存更db（读写不一致）--ok
 
-更db删缓存（缓存失效时读写不一致，概率较低、失败问题依然导致不一致）
+更db删缓存（缓存失效时读写不一致，概率较低、失败问题依然导致不一致）--ok
 
-为了解决失败问题，应用中引入消息队列重试方式，由专门消费者处理重试逻辑；订阅数据库binlog变更日志，使用canal投递数据给消息队列，由专门消费者处理重试逻辑
+为了解决失败问题，应用中引入消息队列重试方式，由专门消费者处理重试逻辑；订阅数据库binlog变更日志，使用canal投递数据给消息队列，由专门消费者处理重试逻辑--ok
 
-先删后更、数据库主从延迟下先更后删都会出现缓存旧值情况，解决需要延迟双删
+先删后更、数据库主从延迟下先更后删都会出现缓存旧值情况，解决需要延迟双删--ok
 
-redis怎么解决读写不一致场景：延时双删+过期时间；
+redis怎么解决读写不一致场景：延时双删+过期时间；--ok
 
 ## 资料：
 
