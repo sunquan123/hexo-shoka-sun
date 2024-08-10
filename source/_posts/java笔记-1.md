@@ -1468,7 +1468,7 @@ unsafe提供cas功能，AtomicInteger等原子类也是调用对应的方法，�
 
 ### Java异常体系
 
-![6479D7BB01736CCC61B8270D41F00B17.png](\images\java\6479D7BB01736CCC61B8270D41F00B17.png)
+![6479D7BB01736CCC61B8270D41F00B17.png](/images/java/6479D7BB01736CCC61B8270D41F00B17.png)
 
 #### 什么是Throwable
 
