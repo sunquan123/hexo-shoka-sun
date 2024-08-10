@@ -105,7 +105,7 @@ theme: shokax
 deploy:
 #  type: 'git'
   type: 'rsync'
-  host: 106.14.127.79
+  host: 117.72.76.125
   user: root
   root: /opt/hexo-sun/
   port: 22
